@@ -8,7 +8,7 @@ with open("reviews.csv", mode="r") as file:
 
 journal_dist = Counter()
 for index, review in enumerate(reviews):
-    journal_dist.update([review["Journal"]])
+    journal_dist.update([review["journal"]])
 
 most_common = journal_dist.most_common(20)
 keys, values = zip(*most_common)
@@ -19,5 +19,5 @@ plt.xlabel('Journal')
 plt.ylabel('Count')
 plt.xticks(rotation=45, ha='right')
 plt.tight_layout()
-plt.savefig('journal_dist.png')
-
+# plt.savefig('journal_dist.png')
+plt.show()

@@ -78,7 +78,8 @@ def get_formats():
     return list(available_formats)
 
 pmcid = "9300959"
-# pmcid = "8204276"
+# pmcid = "7875449"
+# pmcid = "1745665"
 try:
     download_pmcid(pmcid)
     formats = get_formats()

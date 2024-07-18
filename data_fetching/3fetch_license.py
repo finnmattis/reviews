@@ -14,10 +14,7 @@ logging.basicConfig(
 )
 
 EMAIL = "planto73@harkenpretty.com"
-# start_pos = 0
-# end_pos = 20000
 MAX_RETRIES = 3
-BACKOFF_FACTOR = 5
 
 def fetch_license(review, email):
     url = f"https://api.unpaywall.org/v2/{review['DOI']}"
@@ -29,29 +26,35 @@ def fetch_license(review, email):
             data = response.json()
             best_oa_location = data.get("best_oa_location")
             review["url"] = best_oa_location.get("url") if best_oa_location else "No url found"
-            review["pdf_url"] = best_oa_location.get("url_for_pdf") if best_oa_location else "No url found"
             review["license"] = best_oa_location.get("license") if best_oa_location else "No license found"
-            logging.info(f'{review["url"]}, {review["pdf_url"]}, {review["license"]}')
+            # None type does not go into the csv
+            if review["license"] == None:
+                review["license"] = "No license found"
+            logging.info(f'{review["url"]}, {review["license"]}')
             return
         except requests.exceptions.HTTPError as http_err:
+            retries += 1
             if response.status_code == 404:
                 review["url"] = "404"
-                review["pdf_url"] = "404"
                 review["license"] = "404"
                 logging.info(f'{review["url"]}, {review["pdf_url"]}, {review["license"]}')
                 return
-            logging.warning(f"Attempt {retries + 1} failed: HTTP error occurred: {http_err}, response: {response.text}")
+            logging.warning(f"Attempt {retries} failed: HTTP error occurred: {http_err}, response: {response.text}")
         except requests.exceptions.ConnectionError as conn_err:
-            logging.warning(f"Attempt {retries + 1} failed: Connection error occurred: {conn_err}")
+            retries += 1
+            logging.warning(f"Attempt {retries} failed: Connection error occurred: {conn_err}")
         except requests.exceptions.Timeout as timeout_err:
-            logging.warning(f"Attempt {retries + 1} failed: Timeout error occurred: {timeout_err}")
+            retries += 1
+            logging.warning(f"Attempt {retries} failed: Timeout error occurred: {timeout_err}")
         except requests.exceptions.RequestException as req_err:
-            logging.warning(f"Attempt {retries + 1} failed: Request error occurred: {req_err}")
+            retries += 1
+            logging.warning(f"Attempt {retries} failed: Request error occurred: {req_err}")
         except ValueError as val_err:
-            logging.warning(f"Attempt {retries + 1} failed: Value error occurred: {val_err}")
+            retries += 1
+            logging.warning(f"Attempt {retries} failed: Value error occurred: {val_err}")
     review["url"] = "FAILURE"
-    review["pdf_url"] = "FAILURE"
     review["license"] = "FAILURE"
+    logging.info(f'{review["url"]}, {review["license"]}')
 
 def fetch_licenses():
     with ThreadPoolExecutor(max_workers=100) as executor:
@@ -65,11 +68,10 @@ def fetch_licenses():
 with open("reviews.csv", mode="r") as file:
     reader = csv.DictReader(file)
     reviews = [row for row in reader]
-
 fetch_licenses()
 
 with open("reviews.csv", mode="w", newline="") as file:
-    fieldnames = ["ID", "Title", "Authors", "Citation", "Author(s)", "Journal", "Year of Publication", "Full Publication Date", "field1", "field2", "DOI", "license", "url", "pdf_url"]
+    fieldnames = ["pmid", "title", "authors", "citation", "author", "journal", "pub_year", "pub_date", "blank1", "blank2", "doi", "license", "unpay_url", "pubmed_urls", "pmcid", "pmc_url"]
     writer = csv.DictWriter(file, fieldnames=fieldnames)
     writer.writeheader()
     for review in reviews:

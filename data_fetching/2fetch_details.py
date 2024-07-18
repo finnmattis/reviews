@@ -10,8 +10,6 @@ logging.basicConfig(
     ]
 )
 
-# get ids: esearch -db pubmed -query "systematic review[Publication Type]" | efetch -format uid > ids.txt
-
 def fetch_pubmed_details(pmids):
     try:
         query = " OR ".join(pmids)
@@ -27,7 +25,7 @@ def fetch_pubmed_details(pmids):
 def main():
     try:
         with open('ids.txt', 'r') as file:
-            pmids = [line.strip() for line in file.readlines()][139100:]
+            pmids = [line.strip() for line in file.readlines()]
     except FileNotFoundError:
         print("Error: ids.txt file not found.")
         return
@@ -39,6 +37,7 @@ def main():
 
     chunk_size = 100
     with open('reviews.csv', 'a') as output_file:
+        output_file.write("pmid,title,authors,citation,author,journal,pub_year,pub_date,blank1,blank2,doi,license,unpay_url,pubmed_urls,pmcid,pmc_url")
         for i in range(0, total, chunk_size):
             chunk = pmids[i:i+chunk_size]
             logging.info(f"Processing chunk {i//chunk_size + 1} of {((total - 1) // chunk_size) + 1}: PMIDs {chunk[0]} to {chunk[-1]}")
@@ -47,5 +46,5 @@ def main():
 
     print(f"Completed processing {total} PMIDs.")
 
-if __name__ == "__main__":
-    main()
+# convenient to return 
+main()
