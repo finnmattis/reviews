@@ -44,8 +44,10 @@ def fetch_pmcids_batch(batch):
                 else:
                     pmcid = "Not on PMC"
                     logging.info(f"{pmid}:{pmcid}")
-                
-                review["pmcid"] = pmcid
+                if review["pmcid"].startswith("PMC"):
+                    review["pmcid"] = review["pmcid"][3:]
+                else:
+                    review["pmcid"] = pmcid # hacky 
             
             return  # Success, exit function
         else:

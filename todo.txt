@@ -1,2 +1,3 @@
-get pubmed urls
-get PMC urls
+access dist
+find licenses for PMC OA blocked - why are they being blocked
+getting PMC html for non OA

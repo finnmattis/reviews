@@ -1,4 +1,0 @@
-1: Gather ids from Pubmed that have publication type review
-2: Fetch data from Pubmed regarding each one - this gives fields like title, authors, citation, journal, year, etc
-3: Get unpaywall stuff - license, urls
-4: Get pubmed free full text links
