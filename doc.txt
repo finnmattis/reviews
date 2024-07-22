@@ -1,0 +1,56 @@
+The initial goal of this project is to have a comprehensive database of open access systematic reviews.
+The data fetching pipeline is all in the data_fetching folder. To run it, simply run the numbers in order (e.g. 1, 2, 3 ...)
+Now, the purpose and considerations for each script will be described:
+
+1. 
+
+To start, we need to get a list of systematic reviews. The best option for this is Pubmed as it is free and has a ton of papers.
+The first design question is what querry to use for the database.
+
+Naively, you could use the querry "systematic review". This querry checks several fields for each paper and has many false positives.
+This querry yields 356,823 results (as of now)
+
+A much better option is to use the querry "systematic review[pt]".
+This limits your search to articles that have gone through the MEDLINE indexing process and been laballed as systematic reviews.
+This process is carried out by trained professionals and as such, should have a very low false positive rate.
+This querry yeilds 265,950 results (as of now)
+
+There is a third option. Pubmed recommends for regular users to find systematic reviews using the querry "systematic review[sb]"
+The querry is equivelent to the querry: 
+
+(((systematic review[ti] OR systematic literature review[ti] OR systematic scoping review[ti] OR 
+systematic narrative review[ti] OR systematic qualitative review[ti] OR systematic evidence review[ti] OR 
+systematic quantitative review[ti] OR systematic meta-review[ti] OR systematic critical review[ti] OR 
+systematic mixed studies review[ti] OR systematic mapping review[ti] OR systematic cochrane review[ti] OR 
+systematic search and review[ti] OR systematic integrative review[ti]) NOT comment[pt] NOT (protocol[ti] OR 
+protocols[ti])) NOT MEDLINE [subset]) OR (Cochrane Database Syst Rev[ta] AND review[pt]) OR 
+systematic review[pt]
+
+As is apparent, this querry uses a search strategy alongside the publication type.
+This helps find papers that have yet gone through medline indexing yet are still systematic reviews.
+Yet, this querry has a higher margin of error than the publication type approach as the search strategy picks up some non systematic reviews
+Still, this option is a good middle ground between the first two approaches and yields 316,119 (as of now).
+
+After deciding on the querry, you still need to programatically download the ids. 
+To do this, we can use eutils, a suite of tools used to querry Pubmed and PMC.
+In this case, the esearch util returns a list of ids for a specified querry.
+Unfortunately, the https://eutils.ncbi.nlm.nih.gov/entrez/eutils/ endpoint is capped at 10000 results which is not nearly enough.
+Thankfully, the eutils CLI bypasses this cap. As such, the first script is a bash script
+The script requires that you download the eutils CLI which can be done at https://www.ncbi.nlm.nih.gov/books/NBK179288/
+After running the script, you should have an ids.txt file with a Pubmed id (pmid) on each line.
+
+2.
+
+After getting the desired ids, the next step is to get basic metadata for all of them. This can be done with another eutil named efetch.
+
+3.
+
+Unpaywall
+
+4.
+
+Fetch pubmed urls
+
+5.
+
+Fetch pmc urls
