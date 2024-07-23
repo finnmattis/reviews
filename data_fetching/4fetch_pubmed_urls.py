@@ -3,22 +3,22 @@ import csv
 import json
 import logging
 from concurrent.futures import ThreadPoolExecutor
+from tqdm import tqdm
 
 
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s %(levelname)s %(message)s',
     handlers=[
-        logging.FileHandler("pubmed_urls.log"),
-        logging.StreamHandler()
+        logging.FileHandler("pmurls.log"),
     ]
 )
 
-MAX_RETRIES = 3
+MAX_RETRIES = 7
+MAX_THREADS = 100
 
 def fetch_pubmed_urls(review):
-    retries = 0
-    while retries < MAX_RETRIES:
+    for retry in range(MAX_RETRIES):
         try:
             url = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi?dbfrom=pubmed&id={review['pmid']}&cmd=prlinks&retmode=json"
             response = requests.get(url)
@@ -41,39 +41,36 @@ def fetch_pubmed_urls(review):
             if len(links) != 0:
                 review["pubmed_urls"] = json.dumps(links)
             else:
-                review["pubmed_urls"] = "Not free fulltext"
+                review["pubmed_urls"] = "N/A"
             logging.info(f"{review['pmid']}:{review['pubmed_urls']}")
             return
         except requests.exceptions.HTTPError as http_err:
-            retries += 1
             if response.status_code == 404:
-                review["pubmed_urls"] = "404"
+                review["pubmed_urls"] = "N/A"
                 logging.info(f"{review['pmid']}:{review['pubmed_urls']}")
                 return
-            logging.warning(f"Attempt {retries} failed: HTTP error occurred: {http_err}, response: {response.text}")
+            logging.warning(f"Attempt {retry+1} failed: HTTP error occurred: {http_err}, response: {response.text}")
         except requests.exceptions.ConnectionError as conn_err:
-            retries += 1
-            logging.warning(f"Attempt {retries} failed: Connection error occurred: {conn_err}")
+            logging.warning(f"Attempt {retry+1} failed: Connection error occurred: {conn_err}")
         except requests.exceptions.Timeout as timeout_err:
-            retries += 1
-            logging.warning(f"Attempt {retries} failed: Timeout error occurred: {timeout_err}")
+            logging.warning(f"Attempt {retry+1} failed: Timeout error occurred: {timeout_err}")
         except requests.exceptions.RequestException as req_err:
-            retries += 1
-            logging.warning(f"Attempt {retries} failed: Request error occurred: {req_err}")
+            logging.warning(f"Attempt {retry+1} failed: Request error occurred: {req_err}")
         except ValueError as val_err:
-            retries += 1
-            logging.warning(f"Attempt {retries} failed: Value error occurred: {val_err}")
+            logging.warning(f"Attempt {retry+1} failed: Value error occurred: {val_err}")
     review["pubmed_urls"] = "FAILURE"
     logging.info(f"{review['pmid']}:{review['pubmed_urls']}")
     
 def process_reviews():
-    with ThreadPoolExecutor(max_workers=100) as executor:
-        futures = []
-        for review in reviews:
-            futures.append(executor.submit(fetch_pubmed_urls, review))
+    with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
+        list(tqdm(executor.map(lambda review: fetch_pubmed_urls(review),
+                               reviews),
+                  total=len(reviews),
+                  desc="Fetching urls"))  # list forces evaluation of iterator, prevents map from being lazy
 
-        for future in futures:
-            future.result()
+
+with open("pmurls.log", "w"):
+    pass # clear
 
 with open("reviews.csv", mode="r") as file:
     reader = csv.DictReader(file)
@@ -81,9 +78,7 @@ with open("reviews.csv", mode="r") as file:
 
 process_reviews()
 
-with open("reviews.csv", mode="w", newline="") as file:
-    fieldnames = ["pmid", "title", "authors", "citation", "author", "journal", "pub_year", "pub_date", "blank1", "blank2", "doi", "license", "unpay_url", "pubmed_urls", "pmcid", "pmc_url"]
-    writer = csv.DictWriter(file, fieldnames=fieldnames)
+with open("reviews_updated.csv", 'w', newline='') as csvfile:
+    writer = csv.DictWriter(csvfile, fieldnames=reviews[0].keys())
     writer.writeheader()
-    for review in reviews:
-        writer.writerow(review)
+    writer.writerows(reviews)

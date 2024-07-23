@@ -39,13 +39,35 @@ Thankfully, the eutils CLI bypasses this cap. As such, the first script is a bas
 The script requires that you download the eutils CLI which can be done at https://www.ncbi.nlm.nih.gov/books/NBK179288/
 After running the script, you should have an ids.txt file with a Pubmed id (pmid) on each line.
 
+Sidenote: in case you've never run a sheel script, you need to run chmod +x on the file to make it executable
+
 2.
 
-After getting the desired ids, the next step is to get basic metadata for all of them. This can be done with another eutil named efetch.
+After getting the desired ids, the next step is to get basic metadata for all of the reviews. This can be done with another eutil named efetch.
+Efetch provides various information such as Pubmed Central id (pmcid), Digital Object Identifier (doi), title, data published,
+date revised, authors, journal, num times referenced, topics, and references.
+The second script parses this information into two files:
+
+1. reviews.csv has all the information except the references
+2. ref.txt has reference information
+
+This is done for 3 reasons:
+1. This information is really long and makes the reviews.csv file harder to navigate
+2. Putting reference information into reviews.csv makes it take up 2.85GB making it laggy in an editor
+3. You need to bypass the csv field size limit (csv.field_size_limit(sys.maxsize)) in order to work with it in python.
+
+As such, it makes more sense to seperate this information into a seperate file.
+
+Another thing to note is the distinction between N/A and FAILURE.
+A field with N/A means the script ran as intended but pubmed did not have the necessaary data.
+On the other hand, FAILURE means the script failed (usually because of network stuff).
 
 3.
 
-Unpaywall
+Although Pubmed provides lots of useful metadata, they don't have licensing info (at least I didn't find it).
+Thankfully, Unpaywall has license information and provides an free aka Open Acess (OA) link
+The api doesn't have batching like Pubmed but has very generous rate limits so it is quite fast.
+The license data and oa link are saved back to reviews.csv
 
 4.
 

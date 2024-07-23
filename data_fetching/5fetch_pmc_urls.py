@@ -4,18 +4,18 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 import csv
 from requests.exceptions import RequestException
+from tqdm import tqdm
 
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s %(levelname)s %(message)s',
     handlers=[
-        logging.FileHandler("pmc_url.log"),
-        logging.StreamHandler()
+        logging.FileHandler("pmcurls.log"),
     ]
 )
 
 MAX_RETRIES = 3
-MAX_THREADS = 5  # Adjust based on your system's capabilities
+MAX_THREADS = 5
 
 def fetch_pmc_url(review):
     for retry in range(MAX_RETRIES):
@@ -30,7 +30,7 @@ def fetch_pmc_url(review):
                 error_code = error.get('code')
                 error_message = error.text
                 if error_code == "idIsNotOpenAccess":
-                    review["pmc_url"] = "Not OA"
+                    review["pmc_url"] = "N/A"
                     logging.info(f"{review['pmcid']}:{review['pmc_url']}")
                     return
                 else:
@@ -60,14 +60,17 @@ def process_reviews(reviews):
     with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
         futures = []
         for review in reviews:
-            if review["pmcid"] == "Not on PMC":
-                logging.info(f"Not on PMC")
-                review["pmc_url"] = "Not on PMC"
+            if review["pmcid"] == "N/A":
+                logging.info("N/A:N/A")
+                review["pmc_url"] = "N/A"
                 continue
             futures.append(executor.submit(fetch_pmc_url, review))
 
-        for future in futures:
+        for future in tqdm(futures, total=len(futures), desc="Fetching urls"):
             future.result()
+
+with open("pmcurls.log", "w"):
+    pass # clear
 
 with open("reviews.csv", mode="r") as file:
     reader = csv.DictReader(file)
@@ -75,8 +78,7 @@ with open("reviews.csv", mode="r") as file:
 
 process_reviews(reviews)
 
-fieldnames = ["pmid", "title", "authors", "citation", "author", "journal", "pub_year", "pub_date", "blank1", "blank2", "doi", "license", "unpay_url", "pubmed_urls", "pmcid", "pmc_url"]
-with open("reviews_updated.csv", mode="w", newline="") as file:
-    writer = csv.DictWriter(file, fieldnames=fieldnames)
+with open("reviews_updated.csv", 'w', newline='') as csvfile:
+    writer = csv.DictWriter(csvfile, fieldnames=reviews[0].keys())
     writer.writeheader()
     writer.writerows(reviews)
