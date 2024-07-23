@@ -71,8 +71,16 @@ The license data and oa link are saved back to reviews.csv
 
 4.
 
-Fetch pubmed urls
+The next step is fetch another set of urls, this time from pubmed.
+These are the urls that show up on the side of any article you click on.
+This script is pretty standard although it takes a while.
 
 5.
 
-Fetch pmc urls
+This is the final script that gathers metadata. It finds ftp links for OA pmc articles (not the OA means only a subset)
+As with the previous script, this one also takes a while
+
+Other notes:
+
+For all the python scripts, the log files contain the ids so if you're internet goes up halfway, you can recover the progress.
+There are 3 different places urls are gathered - these all give links for a certain ammount more 
