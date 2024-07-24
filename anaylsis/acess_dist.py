@@ -1,35 +1,50 @@
 import csv
 import matplotlib.pyplot as plt
 
-# options: nothing, unpaywall, pubmed links, PMC ftp
+#review["pmc_url"] > review["pmcid"] > reviews["pubmed_urls"] > reviews["unpay_url"]
 
 # Read the CSV file
 with open("reviews.csv", mode="r") as file:
     reader = csv.DictReader(file)
     reviews = list(reader)
 
-# Count reviews on PMC
-num_pmc = sum(1 for review in reviews if review["pmcid"] != "Not on PMC")
-num_not_pmc = len(reviews) - num_pmc
+import csv
+import matplotlib.pyplot as plt
 
-# Data for pie chart
-labels = ['On PMC', 'Not on PMC']
-sizes = [num_pmc, num_not_pmc]
-colors = ['#ff9999', '#66b3ff']
-explode = (0.1, 0)  # explode 1st slice
+# Read the CSV file
+with open("reviews.csv", mode="r") as file:
+    reader = csv.DictReader(file)
+    reviews = list(reader)
 
-# Create pie chart
-plt.figure(figsize=(10, 7))
-plt.pie(sizes, explode=explode, labels=labels, colors=colors,
-        autopct='%1.1f%%', startangle=90, shadow=True)
+# Initialize counters for each link type
+link_types = {
+    "PMC URL": 0,
+    "PMCID": 0,
+    "PubMed URLs": 0,
+    "Unpaywall URL": 0,
+    "No Links": 0
+}
 
-# Equal aspect ratio ensures that pie is drawn as a circle
+# Analyze each review
+for review in reviews:
+    if review["pmc_url"] != "N/A":
+        link_types["PMC URL"] += 1
+    elif review["pmcid"] != "N/A":
+        link_types["PMCID"] += 1
+    elif review["pubmed_urls"] != "N/A":
+        link_types["PubMed URLs"] += 1
+    elif review["unpay_url"] != "N/A":
+        link_types["Unpaywall URL"] += 1
+    else:
+        link_types["No Links"] += 1
+
+plt.figure(figsize=(10, 8))
+plt.pie(link_types.values(), labels=link_types.keys(), autopct='%1.1f%%', startangle=90)
+plt.title("Distribution of Best Available Link Types in Reviews")
 plt.axis('equal')
 
-plt.title("Distribution of Reviews on PMC")
 plt.show()
 
-# Print the exact numbers
-print(f"Reviews on PMC: {num_pmc}")
-print(f"Reviews not on PMC: {num_not_pmc}")
-print(f"Total reviews: {len(reviews)}")
+print("Link Type Distribution:")
+for link_type, count in link_types.items():
+    print(f"{link_type}: {count}")

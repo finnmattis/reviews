@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 import csv
 from requests.exceptions import RequestException
 from tqdm import tqdm
+import re
 
 logging.basicConfig(
     level=logging.INFO,
@@ -49,19 +50,25 @@ def fetch_pmc_url(review):
 
             review["pmc_url"] = ftp_url
             logging.info(f"{review['pmcid']}:{review['pmc_url']}")
+            return
 
         except RequestException as e:
-            logging.error(f"Request failed for PMC ID {review['pmcid']}: {str(e)}")
-            if retry == MAX_RETRIES - 1:
-                logging.error(f"Max retries reached for PMC ID {review['pmcid']}")
-                return None
+            review["pmc_url"] = "FAILURE"
+            logging.info(f"{review['pmcid']}:{review['pmc_url']}")
+            return
+    review["pmc_url"] = "FAILURE"
+    logging.info(f"{review['pmcid']}:{review['pmc_url']}")
 
 def process_reviews(reviews):
     with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
         futures = []
         for review in reviews:
+            if review["pmcid"] == "":
+                review["pmcid"] = "N/A"
+            if urls.get(review["pmcid"]) is not None:
+                review["pmc_url"] = urls.get(review["pmcid"])
+                continue
             if review["pmcid"] == "N/A":
-                logging.info("N/A:N/A")
                 review["pmc_url"] = "N/A"
                 continue
             futures.append(executor.submit(fetch_pmc_url, review))
@@ -69,8 +76,17 @@ def process_reviews(reviews):
         for future in tqdm(futures, total=len(futures), desc="Fetching urls"):
             future.result()
 
-with open("pmcurls.log", "w"):
-    pass # clear
+log_file = "pmcurls.log"
+info_pattern = re.compile(r'INFO\s+(.*)')
+
+urls = {}
+
+with open(log_file, 'r') as file:
+    for line in file:
+        match = info_pattern.search(line)
+        if match:
+            pmid, url = match.group(1).split(':', 1)
+            urls[pmid] = url
 
 with open("reviews.csv", mode="r") as file:
     reader = csv.DictReader(file)

@@ -8,7 +8,8 @@ with open("reviews.csv", mode="r") as file:
 
 license_dist = Counter()
 for index, review in enumerate(reviews):
-    license_dist.update([review["license"]])
+    if review["pmcid"] != "N/A" and review["pmc_url"] == "N/A":
+        license_dist.update([review["license"]])
 
 most_common = license_dist.most_common(100)
 print(most_common)
