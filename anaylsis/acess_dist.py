@@ -1,4 +1,5 @@
 import csv
+import json
 import matplotlib.pyplot as plt
 
 #review["pmc_url"] > review["pmcid"] > reviews["pubmed_urls"] > reviews["unpay_url"]
@@ -19,22 +20,37 @@ with open("reviews.csv", mode="r") as file:
 # Initialize counters for each link type
 link_types = {
     "PMC URL": 0,
-    "PMCID": 0,
-    "PubMed URLs": 0,
-    "Unpaywall URL": 0,
+    # "PMCID": 0,
+    "Unpaywall URL (non-pdf)": 0,
+    "PubMed URLs (non-pdf)": 0,
+    "Unpaywall URL (pdf)": 0,
+    "PubMed URLs (pdf)": 0,
     "No Links": 0
 }
 
-# Analyze each review
 for review in reviews:
     if review["pmc_url"] != "N/A":
         link_types["PMC URL"] += 1
-    elif review["pmcid"] != "N/A":
-        link_types["PMCID"] += 1
+        continue
+    # if review["pmcid"] != "N/A":
+    #     link_types["PMCID"] += 1
+    #
+    if review["unpay_url"] != "N/A"and "pdf" not in review["unpay_url"]:
+        link_types["Unpaywall URL (non-pdf)"] += 1
+        continue
+    if review["pubmed_urls"] != "N/A":
+        non_pdf = False
+        urls = json.loads(review["pubmed_urls"])
+        for url in urls:
+            if "pdf" not in url["url"]:
+                non_pdf = True
+        if non_pdf:
+            link_types["PubMed URLs (non-pdf)"] += 1
+            continue
+    if review["unpay_url"] != "N/A":
+        link_types["Unpaywall URL (pdf)"] += 1
     elif review["pubmed_urls"] != "N/A":
-        link_types["PubMed URLs"] += 1
-    elif review["unpay_url"] != "N/A":
-        link_types["Unpaywall URL"] += 1
+        link_types["PubMed URLs (pdf)"] += 1
     else:
         link_types["No Links"] += 1
 

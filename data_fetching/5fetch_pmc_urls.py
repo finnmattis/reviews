@@ -63,9 +63,7 @@ def process_reviews(reviews):
     with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
         futures = []
         for review in reviews:
-            if review["pmcid"] == "":
-                review["pmcid"] = "N/A"
-            if urls.get(review["pmcid"]) is not None:
+            if urls.get(review["pmcid"]) is not None and urls.get(review["pmcid"]) != "FAILURE":
                 review["pmc_url"] = urls.get(review["pmcid"])
                 continue
             if review["pmcid"] == "N/A":

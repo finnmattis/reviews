@@ -83,4 +83,24 @@ As with the previous script, this one also takes a while
 Other notes:
 
 For all the python scripts, the log files contain the ids so if you're internet goes up halfway, you can recover the progress.
-There are 3 different places urls are gathered - these all give links for a certain ammount more 
+
+-----------------------------------------------------------------------
+
+This project also has a couple anaylsis scripts in the anaylsis folder.
+
+acess_dist, journal_dist, and license_dist:
+
+These all just display basic information about the dataset
+
+ftp.py:
+
+This can be used to download the pmc_url links from reviews.csv.
+Right now, it only downloads a certain id for testing purposes but it can be easily modified to download all of the links.
+Just refer to the other data_fetching scripts.
+
+scrape.py:
+
+This script was intended to get the data off of PMC for pmcids that were not OA. However, PMC does not allow this.
+As such, using this script will get you banned from PMC.
+If you really wanted to acess these articles, you could utilize proxies but these are probably not appropriate for use.
+
